@@ -1,0 +1,107 @@
+# ====================
+# Next.js
+# ====================
+
+# Dependencies
+frontend/node_modules/
+frontend/.pnp
+frontend/.pnp.js
+
+# Build output
+frontend/.next/
+frontend/out/
+
+# Environment files
+frontend/.env*.local
+frontend/.env
+
+# Debug logs
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+
+# Misc
+frontend/.DS_Store
+frontend/*.pem
+
+# Vercel
+frontend/.vercel
+
+# TypeScript
+frontend/*.tsbuildinfo
+frontend/next-env.d.ts
+
+
+# ====================
+# ASP.NET Core
+# ====================
+
+# Build output
+backend/bin/
+backend/obj/
+
+# User-specific files
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.rsuser
+
+# NuGet packages
+*.nupkg
+*.snupkg
+**/packages/
+!**/packages/build/
+*.nuspec
+
+# MSBuild
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# Publish output
+backend/publish/
+backend/**/Properties/PublishProfiles/
+
+# Entity Framework migrations (optional — remove if you want to track them)
+# backend/**/Migrations/
+
+# Environment / secrets
+backend/appsettings.*.local.json
+backend/secrets.json
+backend/**/*secrets*.json
+backend/*.pfx
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+
+# ====================
+# General
+# ====================
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+
+# dotenv
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
