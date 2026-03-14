@@ -13,7 +13,7 @@ jobs:
     name: Validate PR Title
     runs-on: ubuntu-latest
     permissions:
-      pull-requests: read
+      pull-requests: write
 
     steps:
       - name: Validate Semantic PR Title
