@@ -1,0 +1,165 @@
+# GitHub Labels Configuration
+# These labels can be synced to the repository using a tool like:
+# https://github.com/marketplace/actions/create-or-update-labels
+
+# ── Type Labels ──────────────────────────────────────────────────────────────
+- name: "feature"
+  color: "0075ca"
+  description: "New feature or request"
+
+- name: "bug"
+  color: "d73a4a"
+  description: "Something isn't working"
+
+- name: "documentation"
+  color: "0075ca"
+  description: "Improvements or additions to documentation"
+
+- name: "chore"
+  color: "fef2c0"
+  description: "Maintenance tasks, refactoring, or other non-feature work"
+
+- name: "refactor"
+  color: "e4e669"
+  description: "Code refactoring without functional changes"
+
+- name: "testing"
+  color: "bfd4f2"
+  description: "Adding or improving tests"
+
+- name: "style"
+  color: "f9d0c4"
+  description: "Code style changes (formatting, whitespace, etc.)"
+
+- name: "performance"
+  color: "e99695"
+  description: "Performance improvements"
+
+- name: "build"
+  color: "c5def5"
+  description: "Changes to build system or dependencies"
+
+- name: "revert"
+  color: "ee0701"
+  description: "Reverts a previous commit"
+
+# ── Status Labels ─────────────────────────────────────────────────────────────
+- name: "needs triage"
+  color: "ededed"
+  description: "Needs to be triaged by maintainers"
+
+- name: "in progress"
+  color: "fbca04"
+  description: "Work in progress"
+
+- name: "blocked"
+  color: "b60205"
+  description: "Blocked by another issue or PR"
+
+- name: "on hold"
+  color: "e4e669"
+  description: "On hold, waiting for more information or decision"
+
+- name: "ready for review"
+  color: "0e8a16"
+  description: "Ready for code review"
+
+- name: "approved"
+  color: "0e8a16"
+  description: "Approved and ready to merge"
+
+- name: "needs changes"
+  color: "d93f0b"
+  description: "Changes have been requested"
+
+- name: "wip"
+  color: "fbca04"
+  description: "Work in progress, not ready for review"
+
+# ── Priority Labels ───────────────────────────────────────────────────────────
+- name: "priority: critical"
+  color: "b60205"
+  description: "Critical priority – needs immediate attention"
+
+- name: "priority: high"
+  color: "d93f0b"
+  description: "High priority"
+
+- name: "priority: medium"
+  color: "fbca04"
+  description: "Medium priority"
+
+- name: "priority: low"
+  color: "0e8a16"
+  description: "Low priority"
+
+# ── Area/Scope Labels ─────────────────────────────────────────────────────────
+- name: "security"
+  color: "e11d48"
+  description: "Security-related changes or issues"
+
+- name: "breaking change"
+  color: "b60205"
+  description: "Introduces a breaking change"
+
+- name: "dependencies"
+  color: "0366d6"
+  description: "Pull requests that update a dependency file"
+
+- name: "github-actions"
+  color: "000000"
+  description: "Changes to GitHub Actions workflows"
+
+- name: "ci/cd"
+  color: "006b75"
+  description: "Continuous integration and deployment changes"
+
+- name: "configuration"
+  color: "e4e669"
+  description: "Configuration file changes"
+
+# ── Engagement Labels ─────────────────────────────────────────────────────────
+- name: "good first issue"
+  color: "7057ff"
+  description: "Good for newcomers"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Extra attention is needed"
+
+- name: "question"
+  color: "d876e3"
+  description: "Further information is requested"
+
+- name: "discussion"
+  color: "d4c5f9"
+  description: "Open for discussion"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "This issue or pull request already exists"
+
+- name: "invalid"
+  color: "e4e669"
+  description: "This doesn't seem right"
+
+- name: "wontfix"
+  color: "ffffff"
+  description: "This will not be worked on"
+
+# ── Bot Labels ────────────────────────────────────────────────────────────────
+- name: "bot"
+  color: "ededed"
+  description: "Automated pull request or issue"
+
+- name: "automated"
+  color: "ededed"
+  description: "Automated changes"
+
+- name: "javascript"
+  color: "f1e05a"
+  description: "JavaScript/TypeScript related changes"
+
+- name: "python"
+  color: "3572A5"
+  description: "Python related changes"

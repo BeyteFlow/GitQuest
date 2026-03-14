@@ -1,0 +1,148 @@
+name: Auto Label
+
+on:
+  pull_request_target:
+    types:
+      - opened
+      - synchronize
+      - reopened
+  issues:
+    types:
+      - opened
+      - reopened
+
+jobs:
+  label-pr:
+    name: Label Pull Request
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Auto-label PR based on changed files
+        uses: actions/labeler@v5
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          configuration-path: .github/labeler.yml
+          sync-labels: true
+
+  label-pr-by-title:
+    name: Label PR by Conventional Commit Type
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request_target'
+    permissions:
+      pull-requests: write
+
+    steps:
+      - name: Add label based on PR title prefix
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const title = context.payload.pull_request.title;
+            const labelMap = {
+              'feat': 'feature',
+              'fix': 'bug',
+              'docs': 'documentation',
+              'chore': 'chore',
+              'refactor': 'refactor',
+              'test': 'testing',
+              'style': 'style',
+              'perf': 'performance',
+              'ci': 'ci/cd',
+              'build': 'build',
+              'revert': 'revert',
+            };
+
+            const match = title.match(/^(\w+)(\(.+\))?(!)?:/);
+            if (match) {
+              const type = match[1];
+              const label = labelMap[type];
+              if (label) {
+                try {
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.payload.pull_request.number,
+                    labels: [label],
+                  });
+                } catch (e) {
+                  console.log(`Could not add label "${label}": ${e.message}`);
+                }
+              }
+              // Mark breaking changes
+              if (match[3] === '!') {
+                try {
+                  await github.rest.issues.addLabels({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: context.payload.pull_request.number,
+                    labels: ['breaking change'],
+                  });
+                } catch (e) {
+                  console.log(`Could not add breaking change label: ${e.message}`);
+                }
+              }
+            }
+
+  label-issue:
+    name: Label Issue
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues'
+    permissions:
+      issues: write
+
+    steps:
+      - name: Auto-label new issues
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const issue = context.payload.issue;
+            const title = issue.title.toLowerCase();
+            const body = (issue.body || '').toLowerCase();
+
+            const labels = [];
+
+            // Label based on title/body keywords
+            if (title.includes('bug') || title.includes('error') || title.includes('fix') ||
+                body.includes('bug') || body.includes('error')) {
+              labels.push('bug');
+            }
+            if (title.includes('feature') || title.includes('feat') || title.includes('enhancement') ||
+                body.includes('feature request') || body.includes('enhancement')) {
+              labels.push('feature');
+            }
+            if (title.includes('doc') || title.includes('documentation') ||
+                body.includes('documentation')) {
+              labels.push('documentation');
+            }
+            if (title.includes('question') || title.includes('help') ||
+                body.includes('how to') || body.includes('how do')) {
+              labels.push('question');
+            }
+            if (title.includes('security') || title.includes('vulnerability') ||
+                body.includes('security') || body.includes('vulnerability')) {
+              labels.push('security');
+            }
+
+            // Add 'needs triage' to all new issues
+            labels.push('needs triage');
+
+            if (labels.length > 0) {
+              try {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: labels,
+                });
+              } catch (e) {
+                console.log(`Could not add labels: ${e.message}`);
+              }
+            }

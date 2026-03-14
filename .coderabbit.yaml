@@ -1,0 +1,25 @@
+# CodeRabbit AI Code Review Configuration
+# https://docs.coderabbit.ai/getting-started/configure-coderabbit
+
+language: "en-US"
+
+reviews:
+  # Request changes when issues are found
+  request_changes_workflow: false
+  # Enable high-level summary of changes
+  high_level_summary: true
+  # Enable poem in review summary
+  poem: false
+  # Review status
+  review_status: true
+  # Collapse walkthrough comment
+  collapse_walkthrough: false
+  # Auto-review on pull request events
+  auto_review:
+    enabled: true
+    drafts: false
+    base_branches:
+      - "main"
+
+chat:
+  auto_reply: true
