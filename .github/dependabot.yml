@@ -1,8 +1,8 @@
 version: 2
 updates:
-  # Keep GitHub Actions up to date
+  # 1️ Keep GitHub Actions up to date
   - package-ecosystem: "github-actions"
-    directory: "/"
+    directory: "/"             # GitHub Actions YAMLs are in root
     schedule:
       interval: "weekly"
       day: "monday"
@@ -12,9 +12,9 @@ updates:
     commit-message:
       prefix: "chore"
 
-  # Keep npm dependencies up to date
+  # 2️ Keep frontend npm dependencies up to date
   - package-ecosystem: "npm"
-    directory: "/"
+    directory: "/frontend"    # Next.js frontend folder
     schedule:
       interval: "weekly"
       day: "monday"
@@ -28,15 +28,15 @@ updates:
         update-types:
           - "version-update:semver-major"
 
-  # Keep pip dependencies up to date
-  - package-ecosystem: "pip"
-    directory: "/"
+  # 3️ Keep backend NuGet (.NET) dependencies up to date
+  - package-ecosystem: "nuget"
+    directory: "/backend"     # ASP.NET Core backend folder
     schedule:
       interval: "weekly"
       day: "monday"
     labels:
       - "dependencies"
-      - "python"
+      - "csharp"
     commit-message:
       prefix: "chore"
     ignore:
