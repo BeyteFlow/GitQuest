@@ -1,0 +1,69 @@
+# Auto-labeler configuration for pull requests based on changed files
+# https://github.com/actions/labeler
+
+documentation:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "**/*.md"
+      - "docs/**"
+      - ".github/*.md"
+
+github-actions:
+  - changed-files:
+    - any-glob-to-any-file:
+      - ".github/workflows/**"
+      - ".github/actions/**"
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "package.json"
+      - "package-lock.json"
+      - "yarn.lock"
+      - "requirements*.txt"
+      - "Pipfile"
+      - "Pipfile.lock"
+      - "pyproject.toml"
+      - "poetry.lock"
+      - "go.mod"
+      - "go.sum"
+      - "Gemfile"
+      - "Gemfile.lock"
+      - "pom.xml"
+      - "build.gradle"
+
+ci/cd:
+  - changed-files:
+    - any-glob-to-any-file:
+      - ".github/**"
+      - "Dockerfile"
+      - "docker-compose*.yml"
+      - ".dockerignore"
+
+configuration:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "*.config.*"
+      - "*.cfg"
+      - "*.ini"
+      - ".env*"
+      - "*.yaml"
+      - "*.yml"
+      - "!.github/workflows/**"
+
+testing:
+  - changed-files:
+    - any-glob-to-any-file:
+      - "**/*.test.*"
+      - "**/*.spec.*"
+      - "tests/**"
+      - "test/**"
+      - "__tests__/**"
+
+security:
+  - changed-files:
+    - any-glob-to-any-file:
+      - ".github/workflows/codeql.yml"
+      - ".github/workflows/snyk.yml"
+      - "**/*security*"
+      - "**/*auth*"
