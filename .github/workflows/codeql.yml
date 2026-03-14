@@ -25,7 +25,7 @@ jobs:
       matrix:
         language:
           - javascript-typescript
-          - python
+          - csharp
 
     steps:
       - name: Checkout repository
