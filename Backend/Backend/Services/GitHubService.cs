@@ -28,13 +28,17 @@ public class GitHubService
             client_id = section["ClientId"],
             client_secret = section["ClientSecret"],
             code = code,
-            redirect_uri = section["RedirectUri"] // Ensure this matches GitHub settings
+            redirect_uri = section["RedirectUri"]
         };
 
-        var response = await _httpClient.PostAsJsonAsync("https://github.com/login/oauth/access_token", payload);
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
+        {
+            Content = JsonContent.Create(payload)
+        };
+        request.Headers.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
 
-        // GitHub returns this as form-url-encoded by default unless we ask for JSON
-        _httpClient.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        var response = await _httpClient.SendAsync(request);
+        if (!response.IsSuccessStatusCode) return null;
 
         var result = await response.Content.ReadFromJsonAsync<GitHubTokenResponse>();
         return result?.AccessToken;
@@ -42,7 +46,7 @@ public class GitHubService
 
     public async Task<GitHubUserResponse?> GetGitHubUser(string accessToken)
     {
-        var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
+        using var request = new HttpRequestMessage(HttpMethod.Get, "https://api.github.com/user");
         request.Headers.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
 
         var response = await _httpClient.SendAsync(request);
@@ -71,8 +75,9 @@ public class GitHubService
             RepoFullName = ExtractRepoName(item.RepositoryUrl),
             Language = language,
             IssueUrl = item.HtmlUrl,
-            Difficulty = item.Labels.Any(l => l.Name.Contains("good first issue")) ? "Beginner" : "Intermediate",
-            XPReward = item.Labels.Any(l => l.Name.Contains("good first issue")) ? 15 : 30,
+            Difficulty = item.Labels.Any(l => l.Name.Contains("good first issue", StringComparison.OrdinalIgnoreCase)) ? "Beginner" : "Intermediate",
+            XPReward = item.Labels.Any(l =>
+                l.Name.Contains("good first issue", StringComparison.OrdinalIgnoreCase)) ? 15 : 30,
             IsActive = true
         }).ToList() ?? new List<Issue>();
     }
@@ -96,7 +101,7 @@ public record GitHubSearchResponse([property: JsonPropertyName("items")] List<Gi
 public record GitHubIssueItem(
     [property: JsonPropertyName("id")] long Id,
     [property: JsonPropertyName("title")] string Title,
-    [property: JsonPropertyName("body")] string Body,
+    [property: JsonPropertyName("body")] string? Body,
     [property: JsonPropertyName("html_url")] string HtmlUrl,
     [property: JsonPropertyName("repository_url")] string RepositoryUrl,
     [property: JsonPropertyName("labels")] List<GitHubLabel> Labels

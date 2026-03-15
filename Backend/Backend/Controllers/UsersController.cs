@@ -37,6 +37,28 @@ public class UsersController : ControllerBase
 
         if (user == null) return NotFound();
 
-        return Ok(user);
+        var profile = new
+        {
+            user.GitHubUsername,
+            user.AvatarUrl,
+            user.ExperiencePoints,
+            user.CurrentStreak,
+            user.LastContributionDate,
+            Contributions = user.Contributions.Select(c => new
+            {
+                c.CompletedAt,
+                c.PullRequestUrl,
+                Issue = c.Issue == null ? null : new
+                {
+                    c.Issue.Title,
+                    c.Issue.RepoFullName,
+                    c.Issue.IssueUrl,
+                    c.Issue.Difficulty,
+                    c.Issue.XPReward
+                }
+            })
+        };
+
+        return Ok(profile);
     }
 }

@@ -15,13 +15,23 @@ public class GitQuestContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        // Many-to-Many Configuration or specific indexing
         modelBuilder.Entity<User>()
             .HasIndex(u => u.GitHubUsername)
+            .IsUnique();
+
+        modelBuilder.Entity<User>()
+            .HasIndex(u => u.GitHubId)
             .IsUnique();
 
         modelBuilder.Entity<Issue>()
             .HasIndex(i => i.GitHubIssueId)
             .IsUnique();
+
+        // Prevent duplicate active quests for the same user/issue (TOCTOU protection)
+        modelBuilder.Entity<Quest>()
+            .HasIndex(q => new { q.UserId, q.GitHubIssueId, q.Status })
+            .HasFilter("[Status] = 'In Progress'")
+            .IsUnique()
+            .HasDatabaseName("IX_Quests_UserId_GitHubIssueId_ActiveStatus");
     }
 }
