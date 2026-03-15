@@ -28,7 +28,7 @@ public class GitHubService
             client_id = section["ClientId"],
             client_secret = section["ClientSecret"],
             code = code,
-            redirect_uri = section["RedirectUri"]
+            redirect_uri = section["CallbackUrl"]
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")

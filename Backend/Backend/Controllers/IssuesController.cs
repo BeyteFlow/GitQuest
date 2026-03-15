@@ -38,7 +38,8 @@ public class IssuesController : ControllerBase
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized("User ID missing from token.");
 
-        var userId = Guid.Parse(userIdClaim);
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Invalid user ID in token.");
 
         // Verify the issue exists in our database and is still active
         var issue = await _context.Issues.FirstOrDefaultAsync(i => i.GitHubIssueId == id);
@@ -76,9 +77,10 @@ public class IssuesController : ControllerBase
     public async Task<IActionResult> GetMyQuests()
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userIdClaim == null) return Unauthorized();
+        if (userIdClaim == null) return Unauthorized("User ID missing from token.");
 
-        var userId = Guid.Parse(userIdClaim);
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Invalid user ID in token.");
         var quests = await _context.Quests
             .Where(q => q.UserId == userId && q.Status == "In Progress")
             .ToListAsync();
@@ -89,8 +91,9 @@ public class IssuesController : ControllerBase
     public async Task<IActionResult> SubmitQuest(long id)
     {
         var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (userIdClaim == null) return Unauthorized();
-        var userId = Guid.Parse(userIdClaim);
+        if (userIdClaim == null) return Unauthorized("User ID missing from token.");
+        if (!Guid.TryParse(userIdClaim, out var userId))
+            return Unauthorized("Invalid user ID in token.");
 
         var quest = await _context.Quests
             .FirstOrDefaultAsync(q => q.UserId == userId && q.GitHubIssueId == id && q.Status == "In Progress");
