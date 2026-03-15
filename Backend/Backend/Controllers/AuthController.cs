@@ -75,15 +75,23 @@ public class AuthController : ControllerBase
             { "redirect_uri", _config["GitHub:RedirectUri"] ?? "" }
         };
 
-        var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
+        using var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
         {
             Content = new FormUrlEncodedContent(requestData)
         };
         request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
 
-        var response = await client.SendAsync(request);
-        var result = await response.Content.ReadFromJsonAsync<GitHubTokenResponse>();
-        return result?.access_token;
+        try
+        {
+            var response = await client.SendAsync(request);
+            if (!response.IsSuccessStatusCode) return null;
+            var result = await response.Content.ReadFromJsonAsync<GitHubTokenResponse>();
+            return result?.access_token;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private async Task<GitHubUserResponse?> GetGitHubUser(string token)
@@ -92,10 +100,16 @@ public class AuthController : ControllerBase
         client.DefaultRequestHeaders.UserAgent.ParseAdd("GitQuest-App");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var response = await client.GetAsync("https://api.github.com/user");
-        if (!response.IsSuccessStatusCode) return null;
-
-        return await response.Content.ReadFromJsonAsync<GitHubUserResponse>();
+        try
+        {
+            var response = await client.GetAsync("https://api.github.com/user");
+            if (!response.IsSuccessStatusCode) return null;
+            return await response.Content.ReadFromJsonAsync<GitHubUserResponse>();
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private string GenerateJwtToken(User user)

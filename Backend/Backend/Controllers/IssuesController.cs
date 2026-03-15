@@ -40,10 +40,14 @@ public class IssuesController : ControllerBase
 
         var userId = Guid.Parse(userIdClaim);
 
+        // Verify the issue exists in our database and is still active
+        var issue = await _context.Issues.FirstOrDefaultAsync(i => i.GitHubIssueId == id);
+        if (issue == null || !issue.IsActive) return NotFound("Issue not found or no longer active.");
+
         var existingQuest = await _context.Quests
             .FirstOrDefaultAsync(q => q.UserId == userId && q.GitHubIssueId == id && q.Status == "In Progress");
 
-        if (existingQuest != null) return BadRequest("Quest already active.");
+        if (existingQuest != null) return Conflict("Quest already active.");
 
         var quest = new Quest
         {
@@ -55,7 +59,15 @@ public class IssuesController : ControllerBase
         };
 
         _context.Quests.Add(quest);
-        await _context.SaveChangesAsync();
+        try
+        {
+            await _context.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Unique constraint violation: another concurrent request already claimed this quest
+            return Conflict("Quest already active.");
+        }
 
         return Ok(new { message = "Quest claimed!", questId = quest.Id });
     }
@@ -67,7 +79,9 @@ public class IssuesController : ControllerBase
         if (userIdClaim == null) return Unauthorized();
 
         var userId = Guid.Parse(userIdClaim);
-        var quests = await _context.Quests.Where(q => q.UserId == userId).ToListAsync();
+        var quests = await _context.Quests
+            .Where(q => q.UserId == userId && q.Status == "In Progress")
+            .ToListAsync();
         return Ok(quests);
     }
 
@@ -83,17 +97,47 @@ public class IssuesController : ControllerBase
 
         if (quest == null) return NotFound("Quest not found.");
 
+        // Resolve the XP reward from the stored Issue record
+        var issue = await _context.Issues.FirstOrDefaultAsync(i => i.GitHubIssueId == id);
+        if (issue == null || !issue.IsActive) return BadRequest("Issue is no longer available.");
+
         quest.Status = "Completed";
         quest.CompletedAt = DateTime.UtcNow;
 
         var user = await _context.Users.FindAsync(userId);
         if (user != null)
         {
-            user.ExperiencePoints += 30;
-            user.CurrentStreak += 1;
+            user.ExperiencePoints += issue.XPReward;
+
+            // Update streak based on contribution dates (once per day)
+            var today = DateTime.UtcNow.Date;
+            if (user.LastContributionDate.HasValue)
+            {
+                var lastDate = user.LastContributionDate.Value.Date;
+                if (lastDate == today)
+                {
+                    // Already contributed today – do not increment streak
+                }
+                else if (lastDate == today.AddDays(-1))
+                {
+                    // Contributed yesterday – extend streak
+                    user.CurrentStreak += 1;
+                }
+                else
+                {
+                    // Gap in contributions – reset streak
+                    user.CurrentStreak = 1;
+                }
+            }
+            else
+            {
+                user.CurrentStreak = 1;
+            }
+
+            user.LastContributionDate = DateTime.UtcNow;
         }
 
         await _context.SaveChangesAsync();
-        return Ok(new { message = "30 XP Awarded!", totalXp = user?.ExperiencePoints });
+        return Ok(new { message = $"{issue.XPReward} XP Awarded!", totalXp = user?.ExperiencePoints });
     }
 }

@@ -49,7 +49,9 @@ builder.Services.AddScoped<GitHubService>();
 
 // 4. JWT Auth
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
-var secretKey = jwtSettings["Key"] ?? "Your_Fallback_Very_Long_Secret_Key_123!";
+var secretKey = jwtSettings["Key"];
+if (string.IsNullOrEmpty(secretKey))
+    throw new InvalidOperationException("JwtSettings:Key is not configured. Set it via environment variable or user secrets.");
 var key = Encoding.ASCII.GetBytes(secretKey);
 
 builder.Services.AddAuthentication(options =>
