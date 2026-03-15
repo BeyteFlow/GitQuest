@@ -125,7 +125,7 @@ namespace Backend.Migrations
 
                     b.Property<string>("GitHubId")
                         .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<string>("GitHubUsername")
                         .IsRequired()
@@ -135,6 +135,9 @@ namespace Backend.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GitHubId")
+                        .IsUnique();
 
                     b.HasIndex("GitHubUsername")
                         .IsUnique();

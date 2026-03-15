@@ -15,26 +15,12 @@ namespace Backend.Migrations
                 table: "Quests");
 
             migrationBuilder.AlterColumn<string>(
-                name: "GitHubId",
-                table: "Users",
-                type: "nvarchar(450)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(max)");
-
-            migrationBuilder.AlterColumn<string>(
                 name: "Status",
                 table: "Quests",
                 type: "nvarchar(450)",
                 nullable: false,
                 oldClrType: typeof(string),
                 oldType: "nvarchar(max)");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Users_GitHubId",
-                table: "Users",
-                column: "GitHubId",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Quests_UserId_GitHubIssueId_ActiveStatus",
@@ -48,20 +34,8 @@ namespace Backend.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropIndex(
-                name: "IX_Users_GitHubId",
-                table: "Users");
-
-            migrationBuilder.DropIndex(
                 name: "IX_Quests_UserId_GitHubIssueId_ActiveStatus",
                 table: "Quests");
-
-            migrationBuilder.AlterColumn<string>(
-                name: "GitHubId",
-                table: "Users",
-                type: "nvarchar(max)",
-                nullable: false,
-                oldClrType: typeof(string),
-                oldType: "nvarchar(450)");
 
             migrationBuilder.AlterColumn<string>(
                 name: "Status",

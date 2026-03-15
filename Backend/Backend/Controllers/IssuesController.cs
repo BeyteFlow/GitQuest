@@ -108,39 +108,39 @@ public class IssuesController : ControllerBase
         quest.CompletedAt = DateTime.UtcNow;
 
         var user = await _context.Users.FindAsync(userId);
-        if (user != null)
-        {
-            user.ExperiencePoints += issue.XPReward;
+        if (user == null)
+            return NotFound("User account not found.");
 
-            // Update streak based on contribution dates (once per day)
-            var today = DateTime.UtcNow.Date;
-            if (user.LastContributionDate.HasValue)
+        user.ExperiencePoints += issue.XPReward;
+
+        // Update streak based on contribution dates (once per day)
+        var today = DateTime.UtcNow.Date;
+        if (user.LastContributionDate.HasValue)
+        {
+            var lastDate = user.LastContributionDate.Value.Date;
+            if (lastDate == today)
             {
-                var lastDate = user.LastContributionDate.Value.Date;
-                if (lastDate == today)
-                {
-                    // Already contributed today – do not increment streak
-                }
-                else if (lastDate == today.AddDays(-1))
-                {
-                    // Contributed yesterday – extend streak
-                    user.CurrentStreak += 1;
-                }
-                else
-                {
-                    // Gap in contributions – reset streak
-                    user.CurrentStreak = 1;
-                }
+                // Already contributed today – do not increment streak
+            }
+            else if (lastDate == today.AddDays(-1))
+            {
+                // Contributed yesterday – extend streak
+                user.CurrentStreak += 1;
             }
             else
             {
+                // Gap in contributions – reset streak
                 user.CurrentStreak = 1;
             }
-
-            user.LastContributionDate = DateTime.UtcNow;
+        }
+        else
+        {
+            user.CurrentStreak = 1;
         }
 
+        user.LastContributionDate = DateTime.UtcNow;
+
         await _context.SaveChangesAsync();
-        return Ok(new { message = $"{issue.XPReward} XP Awarded!", totalXp = user?.ExperiencePoints });
+        return Ok(new { message = $"{issue.XPReward} XP Awarded!", totalXp = user.ExperiencePoints });
     }
 }

@@ -55,7 +55,7 @@ namespace Backend.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
-                    GitHubId = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    GitHubId = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     GitHubUsername = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Email = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     AvatarUrl = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -109,6 +109,12 @@ namespace Backend.Migrations
                 name: "IX_Issues_GitHubIssueId",
                 table: "Issues",
                 column: "GitHubIssueId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_GitHubId",
+                table: "Users",
+                column: "GitHubId",
                 unique: true);
 
             migrationBuilder.CreateIndex(
