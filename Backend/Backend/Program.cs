@@ -52,7 +52,7 @@ var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var secretKey = jwtSettings["Key"];
 if (string.IsNullOrEmpty(secretKey))
     throw new InvalidOperationException("JwtSettings:Key is not configured. Set it via environment variable or user secrets.");
-var key = Encoding.ASCII.GetBytes(secretKey);
+var key = Encoding.UTF8.GetBytes(secretKey);
 
 builder.Services.AddAuthentication(options =>
 {
