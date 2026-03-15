@@ -73,7 +73,7 @@ public class AuthController : ControllerBase
             { "client_id", _config["GitHub:ClientId"]! },
             { "client_secret", _config["GitHub:ClientSecret"]! },
             { "code", code },
-            { "redirect_uri", _config["GitHub:RedirectUri"] ?? "" }
+            { "redirect_uri", _config["GitHub:CallbackUrl"] ?? "" }
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
