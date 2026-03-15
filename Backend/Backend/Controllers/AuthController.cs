@@ -6,6 +6,7 @@ using System.Text;
 using GitQuest.Backend.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Net.Http.Headers;
+using System.Text.Json;
 
 namespace GitQuest.Backend.Controllers;
 
@@ -88,7 +89,15 @@ public class AuthController : ControllerBase
             var result = await response.Content.ReadFromJsonAsync<GitHubTokenResponse>();
             return result?.access_token;
         }
-        catch (Exception)
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException)
+        {
+            return null;
+        }
+        catch (JsonException)
         {
             return null;
         }
@@ -106,7 +115,15 @@ public class AuthController : ControllerBase
             if (!response.IsSuccessStatusCode) return null;
             return await response.Content.ReadFromJsonAsync<GitHubUserResponse>();
         }
-        catch (Exception)
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException)
+        {
+            return null;
+        }
+        catch (JsonException)
         {
             return null;
         }
