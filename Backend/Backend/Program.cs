@@ -79,13 +79,28 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddAuthorization();
 
 // 5. CORS
+var allowedOrigins = builder.Configuration
+    .GetSection("AllowedOrigins")
+    .Get<string[]>()
+    ?? new[] { "http://localhost:3000" };
+
+if (builder.Environment.IsProduction() &&
+    allowedOrigins.Length == 1 &&
+    allowedOrigins[0] == "http://localhost:3000")
+{
+    throw new InvalidOperationException(
+        "AllowedOrigins is not configured for production. " +
+        "Set at least one production origin in appsettings or environment variables.");
+}
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("GitQuestPolicy", policy =>
     {
-        policy.WithOrigins("http://localhost:3000")
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
-              .AllowAnyMethod();
+              .AllowAnyMethod()
+              .AllowCredentials();
     });
 });
 
