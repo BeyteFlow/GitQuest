@@ -26,6 +26,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("github-login")]
+    [HttpPost("github")]
     public async Task<IActionResult> GitHubLogin([FromBody] string code)
     {
         // 1. Exchange Code for GitHub Access Token
