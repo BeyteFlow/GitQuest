@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Trophy, Flame, Star, Medal, Crown } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Trophy, Flame, Star, Medal, Crown, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -14,112 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { getLeaderboard } from "@/lib/api";
 
 const languages = ["All Languages", "TypeScript", "JavaScript", "Python", "Rust", "Go"];
 const timeframes = ["All Time", "This Month", "This Week", "Today"];
-
-const mockLeaderboard = [
-  {
-    rank: 1,
-    username: "sarahcoder",
-    name: "Sarah Chen",
-    avatar: "https://i.pravatar.cc/150?u=sarah",
-    xp: 45200,
-    streak: 67,
-    issuesResolved: 234,
-    topLanguage: "TypeScript",
-  },
-  {
-    rank: 2,
-    username: "devmaster",
-    name: "Alex Rivera",
-    avatar: "https://i.pravatar.cc/150?u=alex",
-    xp: 42150,
-    streak: 45,
-    issuesResolved: 198,
-    topLanguage: "Python",
-  },
-  {
-    rank: 3,
-    username: "rustacean",
-    name: "Mike Johnson",
-    avatar: "https://i.pravatar.cc/150?u=mike",
-    xp: 38900,
-    streak: 52,
-    issuesResolved: 176,
-    topLanguage: "Rust",
-  },
-  {
-    rank: 4,
-    username: "webwizard",
-    name: "Emma Wilson",
-    avatar: "https://i.pravatar.cc/150?u=emma",
-    xp: 35600,
-    streak: 38,
-    issuesResolved: 165,
-    topLanguage: "JavaScript",
-  },
-  {
-    rank: 5,
-    username: "pythonista",
-    name: "David Kim",
-    avatar: "https://i.pravatar.cc/150?u=david",
-    xp: 32400,
-    streak: 29,
-    issuesResolved: 142,
-    topLanguage: "Python",
-  },
-  {
-    rank: 6,
-    username: "gopher",
-    name: "Lisa Zhang",
-    avatar: "https://i.pravatar.cc/150?u=lisa",
-    xp: 28700,
-    streak: 33,
-    issuesResolved: 128,
-    topLanguage: "Go",
-  },
-  {
-    rank: 7,
-    username: "fullstack",
-    name: "James Brown",
-    avatar: "https://i.pravatar.cc/150?u=james",
-    xp: 25300,
-    streak: 21,
-    issuesResolved: 115,
-    topLanguage: "TypeScript",
-  },
-  {
-    rank: 8,
-    username: "codequeen",
-    name: "Anna Martinez",
-    avatar: "https://i.pravatar.cc/150?u=anna",
-    xp: 22100,
-    streak: 18,
-    issuesResolved: 98,
-    topLanguage: "JavaScript",
-  },
-  {
-    rank: 9,
-    username: "opensourcer",
-    name: "Tom Anderson",
-    avatar: "https://i.pravatar.cc/150?u=tom",
-    xp: 19800,
-    streak: 25,
-    issuesResolved: 87,
-    topLanguage: "TypeScript",
-  },
-  {
-    rank: 10,
-    username: "bugfixer",
-    name: "Sophie Lee",
-    avatar: "https://i.pravatar.cc/150?u=sophie",
-    xp: 17500,
-    streak: 14,
-    issuesResolved: 76,
-    topLanguage: "Python",
-  },
-];
 
 function getRankIcon(rank: number) {
   switch (rank) {
@@ -147,12 +46,46 @@ function getRankStyle(rank: number) {
   }
 }
 
+interface LeaderboardUser {
+  gitHubUsername: string;
+  avatarUrl: string | null;
+  experiencePoints: number;
+  currentStreak: number;
+}
+
 export function Leaderboard() {
   const [language, setLanguage] = useState("All Languages");
   const [timeframe, setTimeframe] = useState("All Time");
+  const [users, setUsers] = useState<LeaderboardUser[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const topThree = mockLeaderboard.slice(0, 3);
-  const restOfLeaderboard = mockLeaderboard.slice(3);
+  // Fetch leaderboard data
+  useEffect(() => {
+    const fetchLeaderboard = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const response = await getLeaderboard();
+        
+        if (response.error) {
+          setError(response.error.message);
+        } else {
+          setUsers(response.data || []);
+        }
+      } catch (err) {
+        setError("Failed to fetch leaderboard");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLeaderboard();
+  }, []);
+
+  const topThree = users.slice(0, 3);
+  const restOfLeaderboard = users.slice(3);
 
   return (
     <div className="container mx-auto px-4">
@@ -194,91 +127,134 @@ export function Leaderboard() {
         </Select>
       </div>
 
-      <Tabs defaultValue="xp" className="w-full">
-        <TabsList className="bg-card border border-border mb-8">
-          <TabsTrigger value="xp" className="gap-2">
-            <Star className="h-4 w-4" />
-            By XP
-          </TabsTrigger>
-          <TabsTrigger value="streak" className="gap-2">
-            <Flame className="h-4 w-4" />
-            By Streak
-          </TabsTrigger>
-        </TabsList>
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <p className="text-red-400 mb-4">Failed to load leaderboard: {error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="border-border"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
 
-        <TabsContent value="xp">
-          {/* Top 3 Podium */}
-          <div className="grid md:grid-cols-3 gap-4 mb-8">
-            {/* Second Place */}
-            <div className="order-2 md:order-1 md:mt-8">
-              <TopThreeCard user={topThree[1]} />
-            </div>
-            {/* First Place */}
-            <div className="order-1 md:order-2">
-              <TopThreeCard user={topThree[0]} isFirst />
-            </div>
-            {/* Third Place */}
-            <div className="order-3 md:mt-12">
-              <TopThreeCard user={topThree[2]} />
-            </div>
-          </div>
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-accent" />
+          <p className="text-muted-foreground">Loading leaderboard...</p>
+        </div>
+      )}
 
-          {/* Rest of Leaderboard */}
-          <div className="space-y-3">
-            {restOfLeaderboard.map((user) => (
-              <LeaderboardRow key={user.username} user={user} />
-            ))}
-          </div>
-        </TabsContent>
+      {/* Content */}
+      {!loading && !error && (
+        <Tabs defaultValue="xp" className="w-full">
+          <TabsList className="bg-card border border-border mb-8">
+            <TabsTrigger value="xp" className="gap-2">
+              <Star className="h-4 w-4" />
+              By XP
+            </TabsTrigger>
+            <TabsTrigger value="streak" className="gap-2">
+              <Flame className="h-4 w-4" />
+              By Streak
+            </TabsTrigger>
+          </TabsList>
 
-        <TabsContent value="streak">
-          {/* Sorted by streak */}
-          <div className="space-y-3">
-            {[...mockLeaderboard]
-              .sort((a, b) => b.streak - a.streak)
-              .map((user, index) => (
-                <LeaderboardRow key={user.username} user={{ ...user, rank: index + 1 }} showStreak />
-              ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+          <TabsContent value="xp">
+            {users.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                No users found on the leaderboard
+              </div>
+            ) : (
+              <>
+                {/* Top 3 Podium */}
+                {topThree.length >= 3 && (
+                  <div className="grid md:grid-cols-3 gap-4 mb-8">
+                    {/* Second Place */}
+                    <div className="order-2 md:order-1 md:mt-8">
+                      <TopThreeCard user={topThree[1]} rank={2} />
+                    </div>
+                    
+                    {/* First Place */}
+                    <div className="order-1 md:order-2">
+                      <TopThreeCard user={topThree[0]} rank={1} />
+                    </div>
+                    
+                    {/* Third Place */}
+                    <div className="order-3 md:order-3 md:mt-8">
+                      <TopThreeCard user={topThree[2]} rank={3} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Rest of Leaderboard */}
+                <div className="space-y-3">
+                  {restOfLeaderboard.map((user, index) => (
+                    <LeaderboardRow key={user.gitHubUsername} user={user} rank={index + 4} />
+                  ))}
+                </div>
+              </>
+            )}
+          </TabsContent>
+
+          <TabsContent value="streak">
+            {users.length === 0 ? (
+              <div className="text-center py-12 text-muted-foreground">
+                No users found on the leaderboard
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {[...users]
+                  .sort((a, b) => b.currentStreak - a.currentStreak)
+                  .map((user, index) => (
+                    <LeaderboardRow key={user.gitHubUsername} user={user} rank={index + 1} sortBy="streak" />
+                  ))}
+              </div>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
   );
 }
 
-function TopThreeCard({ user, isFirst = false }: { user: (typeof mockLeaderboard)[0]; isFirst?: boolean }) {
+function TopThreeCard({ user, rank }: { user: LeaderboardUser; rank: number }) {
+  const isFirst = rank === 1;
+  
   return (
-    <Card className={`bg-card ${getRankStyle(user.rank)} transition-all hover:scale-[1.02]`}>
+    <Card className={`bg-card ${getRankStyle(rank)} transition-all hover:scale-[1.02]`}>
       <CardContent className="p-6 text-center">
         <div className="flex justify-center mb-3">
-          {getRankIcon(user.rank)}
+          {getRankIcon(rank)}
         </div>
-        <Link href={`/profile/${user.username}`}>
+        <Link href={`/profile/${user.gitHubUsername}`}>
           <Avatar className={`mx-auto mb-3 border-4 ${
             isFirst ? "h-24 w-24 border-amber-400/50" : "h-20 w-20 border-border"
           }`}>
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name[0]}</AvatarFallback>
+            <AvatarImage src={user.avatarUrl || ""} alt={user.gitHubUsername} />
+            <AvatarFallback>{user.gitHubUsername[0]?.toUpperCase()}</AvatarFallback>
           </Avatar>
         </Link>
-        <Link href={`/profile/${user.username}`} className="block hover:text-accent transition-colors">
-          <h3 className={`font-bold ${isFirst ? "text-xl" : "text-lg"}`}>{user.name}</h3>
-          <p className="text-sm text-muted-foreground">@{user.username}</p>
+        <Link href={`/profile/${user.gitHubUsername}`} className="block hover:text-accent transition-colors">
+          <h3 className={`font-bold ${isFirst ? "text-xl" : "text-lg"}`}>
+            {user.gitHubUsername}
+          </h3>
+          <p className="text-sm text-muted-foreground">@{user.gitHubUsername}</p>
         </Link>
         <div className="mt-4 space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Star className="h-5 w-5 text-accent" />
-            <span className="font-bold text-lg">{user.xp.toLocaleString()}</span>
+            <span className="font-bold text-lg">{user.experiencePoints.toLocaleString()}</span>
             <span className="text-muted-foreground text-sm">XP</span>
           </div>
           <div className="flex items-center justify-center gap-4 text-sm">
             <span className="flex items-center gap-1">
               <Flame className="h-4 w-4 text-orange-500" />
-              {user.streak} days
+              {user.currentStreak} days
             </span>
-            <Badge variant="outline" className="border-border">
-              {user.topLanguage}
-            </Badge>
           </div>
         </div>
       </CardContent>
@@ -286,46 +262,73 @@ function TopThreeCard({ user, isFirst = false }: { user: (typeof mockLeaderboard
   );
 }
 
-function LeaderboardRow({ user, showStreak = false }: { user: (typeof mockLeaderboard)[0]; showStreak?: boolean }) {
+function LeaderboardRow({ 
+  user, 
+  rank, 
+  sortBy = "xp" 
+}: { 
+  user: LeaderboardUser; 
+  rank: number;
+  sortBy?: "xp" | "streak";
+}) {
   return (
-    <Card className={`bg-card ${getRankStyle(user.rank)} hover:border-accent/50 transition-colors`}>
+    <Card className={`bg-card ${getRankStyle(rank)} hover:border-accent/50 transition-colors`}>
       <CardContent className="p-4">
         <div className="flex items-center gap-4">
           <div className="w-8 flex justify-center shrink-0">
-            {getRankIcon(user.rank)}
+            {getRankIcon(rank)}
           </div>
-          <Link href={`/profile/${user.username}`} className="shrink-0">
-            <Avatar className="h-12 w-12 border-2 border-border hover:border-accent transition-colors">
-              <AvatarImage src={user.avatar} alt={user.name} />
-              <AvatarFallback>{user.name[0]}</AvatarFallback>
+          
+          <Link href={`/profile/${user.gitHubUsername}`}>
+            <Avatar className="h-12 w-12 border-2 border-border">
+              <AvatarImage src={user.avatarUrl || ""} alt={user.gitHubUsername} />
+              <AvatarFallback>{user.gitHubUsername[0]?.toUpperCase()}</AvatarFallback>
             </Avatar>
           </Link>
+          
           <div className="flex-1 min-w-0">
-            <Link href={`/profile/${user.username}`} className="hover:text-accent transition-colors">
-              <h3 className="font-semibold truncate">{user.name}</h3>
-              <p className="text-sm text-muted-foreground">@{user.username}</p>
+            <Link href={`/profile/${user.gitHubUsername}`} className="block hover:text-accent transition-colors">
+              <h4 className="font-semibold truncate">{user.gitHubUsername}</h4>
+              <p className="text-sm text-muted-foreground">@{user.gitHubUsername}</p>
             </Link>
           </div>
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            <span className="flex items-center gap-1.5">
-              <Flame className="h-4 w-4 text-orange-500" />
-              <span className={showStreak ? "font-bold text-foreground" : ""}>{user.streak} days</span>
-            </span>
-            <span className="text-muted-foreground">
-              {user.issuesResolved} issues
-            </span>
-            <Badge variant="outline" className="border-border">
-              {user.topLanguage}
-            </Badge>
-          </div>
-          <div className="text-right shrink-0">
-            <div className="flex items-center gap-1.5">
-              <Star className="h-4 w-4 text-accent" />
-              <span className={`font-bold ${!showStreak ? "text-lg" : ""}`}>
-                {user.xp.toLocaleString()}
-              </span>
-            </div>
-            <span className="text-xs text-muted-foreground">XP</span>
+          
+          <div className="flex items-center gap-6 shrink-0">
+            {sortBy === "xp" ? (
+              <>
+                <div className="text-center">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 text-accent" />
+                    <span className="font-bold">{user.experiencePoints.toLocaleString()}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">XP</span>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center gap-1">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    <span className="font-semibold">{user.currentStreak}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">days</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-center">
+                  <div className="flex items-center gap-1">
+                    <Flame className="h-4 w-4 text-orange-500" />
+                    <span className="font-bold">{user.currentStreak}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">days</span>
+                </div>
+                <div className="text-center">
+                  <div className="flex items-center gap-1">
+                    <Star className="h-4 w-4 text-accent" />
+                    <span className="font-semibold">{user.experiencePoints.toLocaleString()}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">XP</span>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </CardContent>

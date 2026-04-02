@@ -22,6 +22,11 @@ export interface ApiResponse<T> {
   error: ApiError | null;
 }
 
+export type ApiResult<T> = {
+  data: T | null;
+  error: { message: string } | null;
+};
+
 // Shape returned by POST /api/auth/github-login (or /api/auth/github)
 export interface AuthResponse {
   token: string;
@@ -177,4 +182,24 @@ export async function submitQuest(
     { method: "POST" },
     token
   );
+}
+
+// ---------------------------------------------------------------------------
+// Users API
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch a user's profile by username.
+ * Calls GET /api/users/{username}
+ */
+export async function getUserProfile(username: string): Promise<ApiResponse<any>> {
+  return apiFetch<any>(`/api/users/${encodeURIComponent(username)}`);
+}
+
+/**
+ * Fetch the leaderboard (top users by XP).
+ * Calls GET /api/users/leaderboard
+ */
+export async function getLeaderboard(): Promise<ApiResponse<any[]>> {
+  return apiFetch<any[]>("/api/users/leaderboard");
 }

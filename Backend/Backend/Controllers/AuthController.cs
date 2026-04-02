@@ -25,9 +25,44 @@ public class AuthController : ControllerBase
         _httpClientFactory = httpClientFactory;
     }
 
-    [HttpPost("github-login")]
+    // GitHub OAuth initiation - redirects user to GitHub
+    [HttpGet("github")]
+    public IActionResult GitHubAuth()
+    {
+        var clientId = _config["GitHub:ClientId"];
+        var redirectUri = Uri.EscapeDataString(_config["GitHub:CallbackUrl"]!);
+        var scope = Uri.EscapeDataString("user:email");
+        
+        var githubAuthUrl = $"https://github.com/login/oauth/authorize?client_id={clientId}&redirect_uri={redirectUri}&scope={scope}";
+        
+        return Ok(new { authUrl = githubAuthUrl });
+    }
+
+    // GitHub OAuth callback - handles the code from GitHub
+    [HttpGet("github-callback")]
+    public async Task<IActionResult> GitHubCallback([FromQuery] string code, [FromQuery] string? state)
+    {
+        if (string.IsNullOrEmpty(code))
+        {
+            return BadRequest("Authorization code is missing");
+        }
+
+        return await ProcessGitHubLogin(code);
+    }
+
+    // Direct login with GitHub code (for frontend API calls)
     [HttpPost("github")]
-    public async Task<IActionResult> GitHubLogin([FromBody] string code)
+    public async Task<IActionResult> GitHubLogin([FromBody] GitHubLoginRequest request)
+    {
+        if (string.IsNullOrEmpty(request.Code))
+        {
+            return BadRequest("Authorization code is required");
+        }
+
+        return await ProcessGitHubLogin(request.Code);
+    }
+
+    private async Task<IActionResult> ProcessGitHubLogin(string code)
     {
         // 1. Exchange Code for GitHub Access Token
         var githubToken = await GetGitHubAccessToken(code);
@@ -74,7 +109,7 @@ public class AuthController : ControllerBase
             { "client_id", _config["GitHub:ClientId"]! },
             { "client_secret", _config["GitHub:ClientSecret"]! },
             { "code", code },
-            { "redirect_uri", _config["GitHub:CallbackUrl"] ?? "" }
+            { "redirect_uri", _config["GitHub:CallbackUrl"]! }
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, "https://github.com/login/oauth/access_token")
@@ -156,3 +191,5 @@ public class AuthController : ControllerBase
 public record GitHubTokenResponse(string access_token);
 
 public record GitHubUserResponse(long id, string login, string avatar_url);
+
+public record GitHubLoginRequest(string Code);
