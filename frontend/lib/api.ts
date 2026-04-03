@@ -114,11 +114,10 @@ async function apiFetch<T>(
 export async function loginWithGitHub(
   code: string
 ): Promise<ApiResponse<AuthResponse>> {
-  // ASP.NET Core [FromBody] string reads a raw JSON string value ("abc123"),
-  // which is exactly what JSON.stringify produces for a plain string.
+  // Backend expects GitHubLoginRequest object with Code property
   return apiFetch<AuthResponse>("/api/auth/github", {
     method: "POST",
-    body: JSON.stringify(code),
+    body: JSON.stringify({ code }),
   });
 }
 
