@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExternalLink, Flame, Trophy, Star, Calendar, ArrowLeft, Loader2, Target, BookOpen, Bug, Zap } from "lucide-react";
+import { ExternalLink, Flame, Trophy, Star, Calendar, ArrowLeft, BookOpen, Bug, Zap } from "lucide-react";
 import Link from "next/link";
 import { getUserProfile } from "@/lib/api";
 import { Button } from "@/components/ui/button";
