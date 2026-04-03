@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Search, Filter, Sparkles, ExternalLink, Star, GitFork, Clock } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Filter, Sparkles, ExternalLink, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,91 +13,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { discoverIssues, GitHubIssue } from "@/lib/api";
 
 const languages = ["All", "TypeScript", "JavaScript", "Python", "Rust", "Go", "Java"];
-const difficulties = ["All", "Beginner", "Intermediate", "Advanced"];
+const difficulties = ["All", "Beginner", "Intermediate", "Expert"];
 const sortOptions = ["Most Recent", "Most Stars", "Most Forks"];
-
-const mockIssues = [
-  {
-    id: 1,
-    title: "Add dark mode support for dashboard",
-    repo: "vercel/next.js",
-    repoUrl: "https://github.com/vercel/next.js",
-    difficulty: "Beginner",
-    labels: ["good first issue", "enhancement", "ui"],
-    stars: 124500,
-    forks: 26800,
-    language: "TypeScript",
-    createdAt: "2 days ago",
-    isRecommended: true,
-  },
-  {
-    id: 2,
-    title: "Improve error handling in API routes",
-    repo: "trpc/trpc",
-    repoUrl: "https://github.com/trpc/trpc",
-    difficulty: "Intermediate",
-    labels: ["bug", "help wanted"],
-    stars: 32400,
-    forks: 1150,
-    language: "TypeScript",
-    createdAt: "5 days ago",
-    isRecommended: true,
-  },
-  {
-    id: 3,
-    title: "Add Python 3.12 support",
-    repo: "pallets/flask",
-    repoUrl: "https://github.com/pallets/flask",
-    difficulty: "Intermediate",
-    labels: ["enhancement", "python"],
-    stars: 66200,
-    forks: 16100,
-    language: "Python",
-    createdAt: "1 week ago",
-    isRecommended: false,
-  },
-  {
-    id: 4,
-    title: "Fix memory leak in async operations",
-    repo: "tokio-rs/tokio",
-    repoUrl: "https://github.com/tokio-rs/tokio",
-    difficulty: "Advanced",
-    labels: ["bug", "performance"],
-    stars: 24800,
-    forks: 2280,
-    language: "Rust",
-    createdAt: "3 days ago",
-    isRecommended: false,
-  },
-  {
-    id: 5,
-    title: "Update documentation for new features",
-    repo: "facebook/react",
-    repoUrl: "https://github.com/facebook/react",
-    difficulty: "Beginner",
-    labels: ["documentation", "good first issue"],
-    stars: 220000,
-    forks: 45100,
-    language: "JavaScript",
-    createdAt: "1 day ago",
-    isRecommended: true,
-  },
-  {
-    id: 6,
-    title: "Implement rate limiting middleware",
-    repo: "gin-gonic/gin",
-    repoUrl: "https://github.com/gin-gonic/gin",
-    difficulty: "Intermediate",
-    labels: ["feature request", "middleware"],
-    stars: 75400,
-    forks: 7850,
-    language: "Go",
-    createdAt: "4 days ago",
-    isRecommended: false,
-  },
-];
 
 function getDifficultyColor(difficulty: string) {
   switch (difficulty) {
@@ -105,7 +25,7 @@ function getDifficultyColor(difficulty: string) {
       return "bg-emerald-500/20 text-emerald-400 border-emerald-500/30";
     case "Intermediate":
       return "bg-amber-500/20 text-amber-400 border-amber-500/30";
-    case "Advanced":
+    case "Expert":
       return "bg-rose-500/20 text-rose-400 border-rose-500/30";
     default:
       return "bg-muted text-muted-foreground";
@@ -121,19 +41,49 @@ function formatNumber(num: number): string {
 
 export function DiscoverIssues() {
   const [search, setSearch] = useState("");
-  const [language, setLanguage] = useState("All");
+  const [language, setLanguage] = useState("TypeScript");
   const [difficulty, setDifficulty] = useState("All");
   const [sort, setSort] = useState("Most Recent");
+  const [issues, setIssues] = useState<GitHubIssue[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const recommendedIssues = mockIssues.filter((issue) => issue.isRecommended);
-  const filteredIssues = mockIssues.filter((issue) => {
+  // Fetch issues when language changes
+  useEffect(() => {
+    const fetchIssues = async () => {
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const languageQuery = language === "All" ? "typescript" : language.toLowerCase();
+        const response = await discoverIssues(languageQuery);
+        
+        if (response.error) {
+          setError(response.error.message);
+        } else {
+          setIssues(response.data || []);
+        }
+      } catch (err) {
+        setError("Failed to fetch issues");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIssues();
+  }, [language]);
+
+  // Filter issues based on search and difficulty
+  const filteredIssues = issues.filter((issue) => {
     const matchesSearch =
       issue.title.toLowerCase().includes(search.toLowerCase()) ||
-      issue.repo.toLowerCase().includes(search.toLowerCase());
-    const matchesLanguage = language === "All" || issue.language === language;
+      issue.repoFullName.toLowerCase().includes(search.toLowerCase());
     const matchesDifficulty = difficulty === "All" || issue.difficulty === difficulty;
-    return matchesSearch && matchesLanguage && matchesDifficulty;
+    return matchesSearch && matchesDifficulty;
   });
+
+  // Get recommended issues (first 3 for display)
+  const recommendedIssues = filteredIssues.slice(0, 3);
 
   return (
     <div className="container mx-auto px-4">
@@ -198,45 +148,81 @@ export function DiscoverIssues() {
         </div>
       </div>
 
+      {/* Error State */}
+      {error && (
+        <div className="text-center py-12">
+          <p className="text-red-400 mb-4">Failed to load issues: {error}</p>
+          <Button 
+            onClick={() => window.location.reload()} 
+            variant="outline"
+            className="border-border"
+          >
+            Retry
+          </Button>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="text-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-accent" />
+          <p className="text-muted-foreground">Loading issues...</p>
+        </div>
+      )}
+
       {/* AI Recommended Section */}
-      <section className="mb-12">
-        <div className="flex items-center gap-2 mb-4">
-          <Sparkles className="h-5 w-5 text-accent" />
-          <h2 className="text-xl font-semibold">AI-Recommended for You</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {recommendedIssues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} />
-          ))}
-        </div>
-      </section>
+      {!loading && !error && (
+        <section className="mb-12">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-5 w-5 text-accent" />
+            <h2 className="text-xl font-semibold">AI-Recommended for You</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {recommendedIssues.length > 0 ? (
+              recommendedIssues.map((issue) => (
+                <IssueCard key={issue.gitHubIssueId} issue={issue} />
+              ))
+            ) : (
+              <div className="col-span-full text-center py-8 text-muted-foreground">
+                No recommended issues available
+              </div>
+            )}
+          </div>
+        </section>
+      )}
 
       {/* All Issues */}
-      <section>
-        <h2 className="text-xl font-semibold mb-4">All Issues</h2>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredIssues.map((issue) => (
-            <IssueCard key={issue.id} issue={issue} />
-          ))}
-        </div>
-        {filteredIssues.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            No issues found matching your criteria
+      {!loading && !error && (
+        <section>
+          <h2 className="text-xl font-semibold mb-4">
+            All Issues ({filteredIssues.length})
+          </h2>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {filteredIssues.map((issue) => (
+              <IssueCard key={issue.gitHubIssueId} issue={issue} />
+            ))}
           </div>
-        )}
-      </section>
+          {filteredIssues.length === 0 && (
+            <div className="text-center py-12 text-muted-foreground">
+              No issues found matching your criteria
+            </div>
+          )}
+        </section>
+      )}
 
       {/* Load More */}
-      <div className="flex justify-center mt-8">
-        <Button variant="outline" className="border-border">
-          Load More Issues
-        </Button>
-      </div>
+      {!loading && !error && filteredIssues.length > 0 && (
+        <div className="flex justify-center mt-8">
+          <Button variant="outline" className="border-border">
+            Load More Issues
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
 
-function IssueCard({ issue }: { issue: (typeof mockIssues)[0] }) {
+function IssueCard({ issue }: { issue: GitHubIssue }) {
   return (
     <Card className="bg-card border-border hover:border-accent/50 transition-colors group">
       <CardHeader className="pb-3">
@@ -245,7 +231,7 @@ function IssueCard({ issue }: { issue: (typeof mockIssues)[0] }) {
             {issue.title}
           </CardTitle>
           <a
-            href={issue.repoUrl}
+            href={issue.issueUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="shrink-0 p-1 hover:bg-accent/10 rounded transition-colors"
@@ -254,12 +240,12 @@ function IssueCard({ issue }: { issue: (typeof mockIssues)[0] }) {
           </a>
         </div>
         <a
-          href={issue.repoUrl}
+          href={`https://github.com/${issue.repoFullName}`}
           target="_blank"
           rel="noopener noreferrer"
           className="text-sm text-muted-foreground hover:text-accent transition-colors"
         >
-          {issue.repo}
+          {issue.repoFullName}
         </a>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -267,37 +253,39 @@ function IssueCard({ issue }: { issue: (typeof mockIssues)[0] }) {
           <Badge variant="outline" className={getDifficultyColor(issue.difficulty)}>
             {issue.difficulty}
           </Badge>
-          {issue.labels.slice(0, 2).map((label) => (
-            <Badge key={label} variant="secondary" className="text-xs">
-              {label}
-            </Badge>
-          ))}
-        </div>
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <Star className="h-3 w-3" />
-            {formatNumber(issue.stars)}
-          </span>
-          <span className="flex items-center gap-1">
-            <GitFork className="h-3 w-3" />
-            {formatNumber(issue.forks)}
-          </span>
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {issue.createdAt}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <Badge variant="outline" className="text-xs border-border">
-            {issue.language}
+          <Badge variant="secondary" className="text-xs">
+            {issue.xpReward} XP
           </Badge>
-          {issue.isRecommended && (
-            <span className="flex items-center gap-1 text-xs text-accent">
-              <Sparkles className="h-3 w-3" />
-              Recommended
-            </span>
-          )}
         </div>
+        
+        {/* Description preview */}
+        {issue.description && (
+          <p className="text-xs text-muted-foreground line-clamp-2">
+            {issue.description.slice(0, 100)}...
+          </p>
+        )}
+        
+        <div className="flex items-center justify-between">
+          {issue.language && (
+            <Badge variant="outline" className="text-xs border-border">
+              {issue.language}
+            </Badge>
+          )}
+          <span className="text-xs text-accent font-medium">
+            {issue.xpReward} XP Reward
+          </span>
+        </div>
+        
+        <Button 
+          size="sm" 
+          className="w-full"
+          onClick={() => {
+            // TODO: Implement claim functionality
+            window.open(issue.issueUrl, '_blank');
+          }}
+        >
+          View Issue
+        </Button>
       </CardContent>
     </Card>
   );

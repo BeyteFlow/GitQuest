@@ -26,9 +26,9 @@ public class UsersController : ControllerBase
         return Ok(topUsers);
     }
 
-    // GET: api/users/profile/{username}
-    [HttpGet("profile/{username}")]
-    public async Task<IActionResult> GetProfile(string username)
+    // GET: api/users/{username}
+    [HttpGet("{username}")]
+    public async Task<IActionResult> GetUserProfile(string username)
     {
         var user = await _context.Users
             .Include(u => u.Contributions)

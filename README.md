@@ -27,13 +27,14 @@
 
 ## ✨ Features
 
-- 🔍 **Quest Discovery** — Browse real GitHub issues filtered by programming language and difficulty level
+- 🔍 **Quest Discovery** — Browse 30+ real GitHub issues filtered by programming language and difficulty level  
 - 🏆 **Gamification System** — Earn XP, track streaks, and climb the global leaderboard
 - 🎯 **Skill-Matched Levels** — Issues tagged as *Beginner*, *Intermediate*, or *Expert* so you always find the right challenge
 - 🔐 **GitHub OAuth** — One-click sign in with your existing GitHub account; no extra account needed
 - 📊 **Contribution Dashboard** — A personal profile showing your completed quests, XP, and contribution streak
-- 🥇 **Leaderboard** — Compete with other contributors and see where you rank globally
+- 🥇 **Live Leaderboard** — Compete with other contributors and see where you rank globally with real-time data
 - 🗂️ **Project Explorer** — Discover open-source projects looking for contributors like you
+- ⚡ **Real-Time Integration** — Live data from GitHub API, no mock data
 
 ---
 
@@ -49,11 +50,27 @@
 
 | Layer | Technology |
 |---|---|
-| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS, Radix UI |
+| **Frontend** | Next.js 16, React 19, TypeScript, Tailwind CSS, Shadcn/ui |
 | **Backend** | ASP.NET Core 8, C#, Entity Framework Core |
-| **Database** | SQL Server |
-| **Auth** | GitHub OAuth 2.0 + JWT Bearer Tokens |
-| **API Docs** | Swagger / Swashbuckle |
+| **Database** | SQL Server with Entity Framework migrations |
+| **Auth** | GitHub OAuth 2.0 + JWT Bearer Tokens (HTTP-only cookies) |
+| **API** | RESTful endpoints with Swagger/OpenAPI documentation |
+| **Integration** | Live GitHub API, Real-time data synchronization |
+
+---
+
+## 🚀 Current Status
+
+**✅ Fully Integrated & Operational**
+- Frontend-backend integration complete with real GitHub API data
+- OAuth authentication working end-to-end  
+- Live leaderboard with real user rankings
+- 30+ real GitHub issues loaded dynamically
+- Security: JWT tokens in HTTP-only cookies, secrets in user secrets
+- CORS configured between frontend (3000) ↔ backend (5198)
+
+**🎯 Ready to Use:**
+Both services are fully functional and can be started with the provided PowerShell script or manual commands above.
 
 ---
 
@@ -61,21 +78,26 @@
 
 > **Prerequisites:** [Node.js 18.18+](https://nodejs.org), [.NET 8 SDK](https://dotnet.microsoft.com/download), [SQL Server](https://www.microsoft.com/en-us/sql-server), a [GitHub OAuth App](https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app)
 
-```bash
-# 1. Clone the repository
+**🚀 Easy Setup with PowerShell Script:**
+```powershell
+# 1. Clone and navigate to repository
 git clone https://github.com/BeyteFlow/GitQuest.git
 cd GitQuest
 
-# 2. Start the backend
+# 2. Run the integrated startup script (starts both services)
+.\start-gitquest.ps1
+```
+
+**OR Manual Setup:**
+```bash
+# 1. Backend (Terminal 1)
 cd Backend/Backend
 dotnet restore && dotnet run
-# API available at http://localhost:5198
-# Swagger UI at  http://localhost:5198/swagger
+# API available at http://localhost:5198 | Swagger UI at http://localhost:5198/swagger
 
-# 3. (New terminal) Start the frontend
-cd ../../frontend
-npm install
-npm run dev
+# 2. Frontend (Terminal 2) 
+cd frontend
+npm install && npm run dev
 # App available at http://localhost:3000
 ```
 
@@ -83,83 +105,103 @@ Open [http://localhost:3000](http://localhost:3000) and sign in with GitHub — 
 
 ---
 
-## 📦 Installation
+## 📦 Installation & Configuration
 
-### Backend
+### 🔧 Backend Setup
 
 ```bash
 cd Backend/Backend
+dotnet restore
 ```
 
-Create or update `appsettings.Development.json` with your credentials:
+**Configure GitHub OAuth (Required):**
 
+1. **Create GitHub OAuth App** at [GitHub Developer Settings](https://github.com/settings/developers)
+   - **Application name**: `GitQuest Local`
+   - **Authorization callback URL**: `http://localhost:3000/api/auth/callback/github`
+
+2. **Set User Secrets (Secure - Recommended):**
+```bash
+# Initialize user secrets
+dotnet user-secrets init
+
+# Set GitHub OAuth credentials
+dotnet user-secrets set "GitHub:ClientSecret" "your_github_oauth_client_secret"
+```
+
+3. **Configure appsettings.json:**
 ```json
 {
   "ConnectionStrings": {
     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=GitQuestDB;Trusted_Connection=True;"
   },
   "JwtSettings": {
-    "Key": "YOUR_SUPER_SECRET_JWT_KEY_AT_LEAST_32_CHARS",
+    "Key": "Your_Super_Secret_Key_At_Least_32_Chars_Long!",
     "Issuer": "GitQuestBackend",
     "Audience": "GitQuestFrontend",
     "DurationInMinutes": 1440
   },
   "GitHub": {
-    "ClientId": "YOUR_GITHUB_OAUTH_CLIENT_ID",
-    "ClientSecret": "YOUR_GITHUB_OAUTH_CLIENT_SECRET",
+    "ClientId": "your_github_oauth_client_id",
     "CallbackUrl": "http://localhost:3000/api/auth/callback/github"
   }
 }
 ```
 
+4. **Initialize Database:**
 ```bash
-dotnet restore
-dotnet build
+dotnet ef database update
 dotnet run
 ```
 
-### Frontend
+### 🌐 Frontend Setup
 
 ```bash
 cd frontend
-npm install      # or: yarn install / pnpm install
-npm run dev      # starts development server on http://localhost:3000
+npm install
 ```
 
-For a production build:
+**Configure Environment Variables:**
+Create `.env.local`:
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5198
+NEXT_PUBLIC_GITHUB_CLIENT_ID=your_github_oauth_client_id
+```
 
+**Start Development Server:**
 ```bash
-npm run build
-npm start
+npm run dev      # Development (http://localhost:3000)
+npm run build    # Production build
+npm start        # Production server
 ```
 
 ---
 
 ## 🎮 Usage
 
-### 1. Sign In
-Click **"Sign in with GitHub"** on the home page. GitQuest uses GitHub OAuth — no password required.
+### 1. 🔐 Sign In
+Click **"Sign in with GitHub"** on the home page. GitQuest uses secure GitHub OAuth — no password required.
 
-### 2. Discover Quests
-Navigate to **Discover**, filter by your favourite programming language, and browse available quests (real GitHub issues).
+### 2. 🔍 Discover Real Quests  
+Navigate to **Discover**, filter by your favorite programming language, and browse 30+ real GitHub issues refreshed live.
 
 ```http
 GET /api/issues/discover?language=typescript
 ```
 
-### 3. Claim a Quest
+### 3. 🎯 Claim a Quest
 Found an issue you like? Hit **"Claim Quest"** to lock it in and start working.
 
-```http
+```http  
 POST /api/issues/{issueId}/claim
 Authorization: Bearer <JWT_TOKEN>
 ```
 
-### 4. Complete & Earn XP
+### 4. 🏆 Complete & Earn XP
 Open a pull request on GitHub and link it to your quest. Once merged, XP is awarded automatically and your streak counter grows.
 
-### 5. Check the Leaderboard
-Head to `/leaderboard` to see how you rank against other contributors globally.
+### 5. 🥇 Check the Live Leaderboard
+Head to `/leaderboard` to see real-time rankings of contributors globally.
 
 ---
 
